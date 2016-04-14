@@ -1,0 +1,26 @@
+Elm.Block = Elm.Block || {};
+Elm.Block.make = function (_elm) {
+   "use strict";
+   _elm.Block = _elm.Block || {};
+   if (_elm.Block.values) return _elm.Block.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var size = 25;
+   var toForm = function (block) {
+      var shape = $Graphics$Collage.square(size);
+      var border = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.black),shape);
+      return $Graphics$Collage.group(_U.list([A2($Graphics$Collage.filled,block.color,shape),border]));
+   };
+   var Block = function (a) {    return {color: a};};
+   var main = A3($Graphics$Collage.collage,400,400,_U.list([toForm(Block($Color.blue))]));
+   return _elm.Block.values = {_op: _op,Block: Block,size: size,toForm: toForm,main: main};
+};

@@ -1,0 +1,22 @@
+Elm.Controller = Elm.Controller || {};
+Elm.Controller.make = function (_elm) {
+   "use strict";
+   _elm.Controller = _elm.Controller || {};
+   if (_elm.Controller.values) return _elm.Controller.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Keyboard = Elm.Keyboard.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var Shift = function (a) {    return {ctor: "Shift",_0: a};};
+   var Rotate = {ctor: "Rotate"};
+   var arrowsToInput = function (_p0) {    var _p1 = _p0;var _p2 = _p1.y;return _U.eq(_p2,1) ? Rotate : Shift({ctor: "_Tuple2",_0: _p2,_1: _p1.x});};
+   var inputs = A2($Signal.map,arrowsToInput,$Keyboard.arrows);
+   var main = A2($Signal.map,$Graphics$Element.show,inputs);
+   return _elm.Controller.values = {_op: _op,Rotate: Rotate,Shift: Shift,arrowsToInput: arrowsToInput,inputs: inputs,main: main};
+};
