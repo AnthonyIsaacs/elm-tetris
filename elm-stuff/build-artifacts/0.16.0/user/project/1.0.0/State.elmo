@@ -13,15 +13,19 @@ Elm.State.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $Tetromino = Elm.Tetromino.make(_elm);
+   $Tetromino = Elm.Tetromino.make(_elm),
+   $Time = Elm.Time.make(_elm);
    var _op = {};
+   var checkTick = function (state) {
+      return _U.cmp(state.time,state.nextShift) < 0 ? state : _U.update(state,
+      {falling: A2($Tetromino.shift,{ctor: "_Tuple2",_0: -1,_1: 0},state.falling),nextShift: state.time + state.shiftDelay});
+   };
    var update = F2(function (input,state) {
       var _p0 = input;
-      if (_p0.ctor === "Rotate") {
-            return _U.update(state,{falling: $Tetromino.rotate(state.falling)});
-         } else {
-            return _U.update(state,{falling: A2($Tetromino.shift,_p0._0,state.falling)});
-         }
+      switch (_p0.ctor)
+      {case "Rotate": return _U.update(state,{falling: $Tetromino.rotate(state.falling)});
+         case "Shift": return _U.update(state,{falling: A2($Tetromino.shift,_p0._0,state.falling)});
+         default: return checkTick(_U.update(state,{time: state.time + _p0._0}));}
    });
    var view = function (state) {
       var fallingForm = $Tetromino.toForm(state.falling);
@@ -29,9 +33,9 @@ Elm.State.make = function (_elm) {
       var screenWidth = 800;
       return A3($Graphics$Collage.collage,screenWidth,screenHeight,_U.list([fallingForm]));
    };
-   var defaultState = {falling: $Tetromino.j};
+   var defaultState = {falling: $Tetromino.j,time: 0,nextShift: $Time.second,shiftDelay: $Time.second};
    var states = A3($Signal.foldp,update,defaultState,$Controller.inputs);
    var main = A2($Signal.map,view,states);
-   var State = function (a) {    return {falling: a};};
-   return _elm.State.values = {_op: _op,State: State,defaultState: defaultState,view: view,update: update,states: states,main: main};
+   var State = F4(function (a,b,c,d) {    return {falling: a,time: b,nextShift: c,shiftDelay: d};});
+   return _elm.State.values = {_op: _op,State: State,defaultState: defaultState,view: view,checkTick: checkTick,update: update,states: states,main: main};
 };
