@@ -6630,6 +6630,32 @@ Elm.Keyboard.make = function (_elm) {
                                  ,keysDown: keysDown
                                  ,presses: presses};
 };
+Elm.Block = Elm.Block || {};
+Elm.Block.make = function (_elm) {
+   "use strict";
+   _elm.Block = _elm.Block || {};
+   if (_elm.Block.values) return _elm.Block.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var size = 25;
+   var toForm = function (block) {
+      var shape = $Graphics$Collage.square(size);
+      var border = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.black),shape);
+      return $Graphics$Collage.group(_U.list([A2($Graphics$Collage.filled,block.color,shape),border]));
+   };
+   var Block = function (a) {    return {color: a};};
+   var main = A3($Graphics$Collage.collage,400,400,_U.list([toForm(Block($Color.blue))]));
+   return _elm.Block.values = {_op: _op,Block: Block,size: size,toForm: toForm,main: main};
+};
 Elm.Controller = Elm.Controller || {};
 Elm.Controller.make = function (_elm) {
    "use strict";
@@ -6651,4 +6677,155 @@ Elm.Controller.make = function (_elm) {
    var inputs = A2($Signal.map,arrowsToInput,$Keyboard.arrows);
    var main = A2($Signal.map,$Graphics$Element.show,inputs);
    return _elm.Controller.values = {_op: _op,Rotate: Rotate,Shift: Shift,arrowsToInput: arrowsToInput,inputs: inputs,main: main};
+};
+Elm.Tetromino = Elm.Tetromino || {};
+Elm.Tetromino.make = function (_elm) {
+   "use strict";
+   _elm.Tetromino = _elm.Tetromino || {};
+   if (_elm.Tetromino.values) return _elm.Tetromino.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Block = Elm.Block.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var shift = F2(function (_p0,tetromino) {
+      var _p1 = _p0;
+      var _p5 = _p1._0;
+      var _p4 = _p1._1;
+      var pivot$ = {r: tetromino.pivot.r + $Basics.toFloat(_p5),c: tetromino.pivot.c + $Basics.toFloat(_p4)};
+      var shiftHelper = function (_p2) {    var _p3 = _p2;return {ctor: "_Tuple2",_0: _p3._0 + _p5,_1: _p3._1 + _p4};};
+      var newShape = A2($List.map,shiftHelper,tetromino.shape);
+      return _U.update(tetromino,{shape: newShape,pivot: pivot$});
+   });
+   var rotateLocation = F3(function (pivot,angle,_p6) {
+      var _p7 = _p6;
+      var _p8 = {ctor: "_Tuple2",_0: $Basics.sin(angle),_1: $Basics.cos(angle)};
+      var s = _p8._0;
+      var c = _p8._1;
+      var colOrigin = $Basics.toFloat(_p7._1) - pivot.c;
+      var rowOrigin = $Basics.toFloat(_p7._0) - pivot.r;
+      var rowRotated = rowOrigin * c - colOrigin * s;
+      var colRotated = rowOrigin * s - colOrigin * c;
+      return {ctor: "_Tuple2",_0: $Basics.round(rowRotated + pivot.r),_1: $Basics.round(colRotated + pivot.c)};
+   });
+   var rotate = function (tetromino) {
+      var rotateHelper = A2(rotateLocation,tetromino.pivot,$Basics.degrees(90));
+      var newShape = A2($List.map,rotateHelper,tetromino.shape);
+      return _U.update(tetromino,{shape: newShape,rows: tetromino.cols,cols: tetromino.rows});
+   };
+   var drawPivot = function (_p9) {
+      var _p10 = _p9;
+      var _p11 = _p10.pivot;
+      var translate = $Graphics$Collage.move({ctor: "_Tuple2",_0: _p11.c * $Block.size,_1: _p11.r * $Block.size});
+      var dot = A2($Graphics$Collage.filled,$Color.black,$Graphics$Collage.circle(5));
+      return translate(dot);
+   };
+   var o = {shape: _U.list([{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 1},{ctor: "_Tuple2",_0: -1,_1: 0},{ctor: "_Tuple2",_0: -1,_1: 1}])
+           ,block: $Block.Block($Color.yellow)
+           ,pivot: {r: -0.5,c: 0.5}
+           ,rows: 2
+           ,cols: 2};
+   var tetromino = A2(shift,{ctor: "_Tuple2",_0: 5,_1: 3},o);
+   var t = {shape: _U.list([{ctor: "_Tuple2",_0: 0,_1: -1},{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 1},{ctor: "_Tuple2",_0: -1,_1: 0}])
+           ,block: $Block.Block($Color.purple)
+           ,pivot: {r: 0.0,c: 0.0}
+           ,rows: 2
+           ,cols: 3};
+   var s = {shape: _U.list([{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 1},{ctor: "_Tuple2",_0: -1,_1: -1},{ctor: "_Tuple2",_0: -1,_1: 0}])
+           ,block: $Block.Block($Color.green)
+           ,pivot: {r: 0.0,c: 0.0}
+           ,rows: 2
+           ,cols: 3};
+   var z = {shape: _U.list([{ctor: "_Tuple2",_0: 1,_1: -1},{ctor: "_Tuple2",_0: 1,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 1}])
+           ,block: $Block.Block($Color.red)
+           ,pivot: {r: 0.0,c: 0.0}
+           ,rows: 2
+           ,cols: 3};
+   var l = {shape: _U.list([{ctor: "_Tuple2",_0: 1,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: -1,_1: 0},{ctor: "_Tuple2",_0: -1,_1: 1}])
+           ,block: $Block.Block($Color.orange)
+           ,pivot: {r: 0.0,c: 0.0}
+           ,rows: 3
+           ,cols: 2};
+   var j = {shape: _U.list([{ctor: "_Tuple2",_0: 1,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: -1,_1: -1},{ctor: "_Tuple2",_0: -1,_1: 0}])
+           ,block: $Block.Block($Color.blue)
+           ,pivot: {r: 0.0,c: 0.0}
+           ,rows: 3
+           ,cols: 2};
+   var i = {shape: _U.list([{ctor: "_Tuple2",_0: 1,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: -1,_1: 0},{ctor: "_Tuple2",_0: -2,_1: 0}])
+           ,block: $Block.Block($Color.lightBlue)
+           ,pivot: {r: -0.5,c: 0.5}
+           ,rows: 4
+           ,cols: 1};
+   var toForm = function (_p12) {
+      var _p13 = _p12;
+      var form = $Block.toForm(_p13.block);
+      var translate = function (_p14) {
+         var _p15 = _p14;
+         return A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: $Basics.toFloat(_p15._1) * $Block.size,_1: $Basics.toFloat(_p15._0) * $Block.size},form);
+      };
+      var forms = A2($List.map,translate,_p13.shape);
+      return $Graphics$Collage.group(forms);
+   };
+   var main = A3($Graphics$Collage.collage,400,400,_U.list([toForm(tetromino),drawPivot(tetromino)]));
+   var Tetromino = F5(function (a,b,c,d,e) {    return {shape: a,block: b,pivot: c,rows: d,cols: e};});
+   return _elm.Tetromino.values = {_op: _op
+                                  ,Tetromino: Tetromino
+                                  ,toForm: toForm
+                                  ,i: i
+                                  ,j: j
+                                  ,l: l
+                                  ,z: z
+                                  ,s: s
+                                  ,t: t
+                                  ,o: o
+                                  ,drawPivot: drawPivot
+                                  ,rotateLocation: rotateLocation
+                                  ,rotate: rotate
+                                  ,shift: shift
+                                  ,tetromino: tetromino
+                                  ,main: main};
+};
+Elm.State = Elm.State || {};
+Elm.State.make = function (_elm) {
+   "use strict";
+   _elm.State = _elm.State || {};
+   if (_elm.State.values) return _elm.State.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Controller = Elm.Controller.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Tetromino = Elm.Tetromino.make(_elm);
+   var _op = {};
+   var update = F2(function (input,state) {
+      var _p0 = input;
+      if (_p0.ctor === "Rotate") {
+            return _U.update(state,{falling: $Tetromino.rotate(state.falling)});
+         } else {
+            return _U.update(state,{falling: A2($Tetromino.shift,_p0._0,state.falling)});
+         }
+   });
+   var view = function (state) {
+      var fallingForm = $Tetromino.toForm(state.falling);
+      var screenHeight = 600;
+      var screenWidth = 800;
+      return A3($Graphics$Collage.collage,screenWidth,screenHeight,_U.list([fallingForm]));
+   };
+   var defaultState = {falling: $Tetromino.j};
+   var states = A3($Signal.foldp,update,defaultState,$Controller.inputs);
+   var main = A2($Signal.map,view,states);
+   var State = function (a) {    return {falling: a};};
+   return _elm.State.values = {_op: _op,State: State,defaultState: defaultState,view: view,update: update,states: states,main: main};
 };

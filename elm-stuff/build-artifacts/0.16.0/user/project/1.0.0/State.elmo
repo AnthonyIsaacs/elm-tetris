@@ -1,0 +1,37 @@
+Elm.State = Elm.State || {};
+Elm.State.make = function (_elm) {
+   "use strict";
+   _elm.State = _elm.State || {};
+   if (_elm.State.values) return _elm.State.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Controller = Elm.Controller.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Tetromino = Elm.Tetromino.make(_elm);
+   var _op = {};
+   var update = F2(function (input,state) {
+      var _p0 = input;
+      if (_p0.ctor === "Rotate") {
+            return _U.update(state,{falling: $Tetromino.rotate(state.falling)});
+         } else {
+            return _U.update(state,{falling: A2($Tetromino.shift,_p0._0,state.falling)});
+         }
+   });
+   var view = function (state) {
+      var fallingForm = $Tetromino.toForm(state.falling);
+      var screenHeight = 600;
+      var screenWidth = 800;
+      return A3($Graphics$Collage.collage,screenWidth,screenHeight,_U.list([fallingForm]));
+   };
+   var defaultState = {falling: $Tetromino.j};
+   var states = A3($Signal.foldp,update,defaultState,$Controller.inputs);
+   var main = A2($Signal.map,view,states);
+   var State = function (a) {    return {falling: a};};
+   return _elm.State.values = {_op: _op,State: State,defaultState: defaultState,view: view,update: update,states: states,main: main};
+};
