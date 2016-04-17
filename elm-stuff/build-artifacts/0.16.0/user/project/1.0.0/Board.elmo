@@ -1,0 +1,57 @@
+Elm.Board = Elm.Board || {};
+Elm.Board.make = function (_elm) {
+   "use strict";
+   _elm.Board = _elm.Board || {};
+   if (_elm.Board.values) return _elm.Board.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Block = Elm.Block.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Dict = Elm.Dict.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Tetromino = Elm.Tetromino.make(_elm);
+   var _op = {};
+   var rows = 20;
+   var cols = 10;
+   var background = function () {
+      var shape = A2($Graphics$Collage.rect,$Basics.toFloat(cols) * $Block.size,$Basics.toFloat(rows) * $Block.size);
+      var border = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.black),shape);
+      return $Graphics$Collage.group(_U.list([border,A2($Graphics$Collage.filled,$Color.black,shape)]));
+   }();
+   var addBlock = F3(function (_p0,block,form) {
+      var _p1 = _p0;
+      var y = $Basics.toFloat(_p1._0) * $Block.size;
+      var x = $Basics.toFloat(_p1._1) * $Block.size;
+      var offSetY = (0 - $Basics.toFloat(rows - 1)) / 2 * $Block.size;
+      var offSetX = (0 - $Basics.toFloat(cols - 1)) / 2 * $Block.size;
+      var blockForm = A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: offSetX + x,_1: offSetY + y},$Block.toForm(block));
+      return $Graphics$Collage.group(_U.list([form,blockForm]));
+   });
+   var toForm = function (board) {    return A3($Dict.foldr,addBlock,background,board);};
+   var testForm = A3(addBlock,{ctor: "_Tuple2",_0: 0,_1: 0},$Block.Block($Color.blue),background);
+   var testForm$ = A3(addBlock,{ctor: "_Tuple2",_0: 1,_1: 0},$Block.Block($Color.red),testForm);
+   var testForm$$ = A3(addBlock,{ctor: "_Tuple2",_0: 0,_1: 1},$Block.Block($Color.yellow),testForm$);
+   var $new = $Dict.fromList;
+   var testBoard = $new(_U.list([{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 0},_1: $Block.Block($Color.blue)}
+                                ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 1},_1: $Block.Block($Color.yellow)}
+                                ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 1,_1: 0},_1: $Block.Block($Color.red)}
+                                ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 1,_1: 1},_1: $Block.Block($Color.green)}]));
+   var main = A3($Graphics$Collage.collage,600,600,_U.list([toForm(testBoard)]));
+   return _elm.Board.values = {_op: _op
+                              ,$new: $new
+                              ,cols: cols
+                              ,rows: rows
+                              ,background: background
+                              ,addBlock: addBlock
+                              ,toForm: toForm
+                              ,testForm: testForm
+                              ,testForm$: testForm$
+                              ,testForm$$: testForm$$
+                              ,testBoard: testBoard
+                              ,main: main};
+};
