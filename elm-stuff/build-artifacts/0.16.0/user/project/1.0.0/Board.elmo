@@ -16,6 +16,20 @@ Elm.Board.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Tetromino = Elm.Tetromino.make(_elm);
    var _op = {};
+   var clearRow = F2(function (row,board) {
+      var shift = F3(function (_p0,block,newBoard) {
+         var _p1 = _p0;
+         var _p3 = _p1._0;
+         var _p2 = _p1._1;
+         return _U.cmp(_p3,row) < 0 ? A3($Dict.insert,{ctor: "_Tuple2",_0: _p3,_1: _p2},block,newBoard) : _U.cmp(_p3,row) > 0 ? A3($Dict.insert,
+         {ctor: "_Tuple2",_0: _p3 - 1,_1: _p2},
+         block,
+         newBoard) : newBoard;
+      });
+      return A3($Dict.foldr,shift,$Dict.empty,board);
+   });
+   var cumulativeSum = A2($List.scanl,F2(function (x,y) {    return x + y;}),0);
+   var iota = function (n) {    return cumulativeSum(A2($List.repeat,n - 1,1));};
    var rows = 20;
    var cols = 10;
    var background = function () {
@@ -23,10 +37,10 @@ Elm.Board.make = function (_elm) {
       var border = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.black),shape);
       return $Graphics$Collage.group(_U.list([border,A2($Graphics$Collage.filled,$Color.black,shape)]));
    }();
-   var addBlock = F3(function (_p0,block,form) {
-      var _p1 = _p0;
-      var y = $Basics.toFloat(_p1._0) * $Block.size;
-      var x = $Basics.toFloat(_p1._1) * $Block.size;
+   var addBlock = F3(function (_p4,block,form) {
+      var _p5 = _p4;
+      var y = $Basics.toFloat(_p5._0) * $Block.size;
+      var x = $Basics.toFloat(_p5._1) * $Block.size;
       var offSetY = (0 - $Basics.toFloat(rows - 1)) / 2 * $Block.size;
       var offSetX = (0 - $Basics.toFloat(cols - 1)) / 2 * $Block.size;
       var blockForm = A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: offSetX + x,_1: offSetY + y},$Block.toForm(block));
@@ -36,12 +50,45 @@ Elm.Board.make = function (_elm) {
    var testForm = A3(addBlock,{ctor: "_Tuple2",_0: 0,_1: 0},$Block.Block($Color.blue),background);
    var testForm$ = A3(addBlock,{ctor: "_Tuple2",_0: 1,_1: 0},$Block.Block($Color.red),testForm);
    var testForm$$ = A3(addBlock,{ctor: "_Tuple2",_0: 0,_1: 1},$Block.Block($Color.yellow),testForm$);
+   var checkRow = F2(function (row,board) {
+      var blocks = A2($Dict.filter,F2(function (_p7,_p6) {    var _p8 = _p7;return _U.eq(_p8._0,row);}),board);
+      return _U.eq($Dict.size(blocks),cols);
+   });
+   var clearLines = function () {
+      var clearLines$ = F3(function (row,lines,board) {
+         clearLines$: while (true) if (_U.cmp(row,rows) > -1) return {ctor: "_Tuple2",_0: lines,_1: board}; else if (A2(checkRow,row,board)) {
+                  var _v3 = row,_v4 = lines + 1,_v5 = A2(clearRow,row,board);
+                  row = _v3;
+                  lines = _v4;
+                  board = _v5;
+                  continue clearLines$;
+               } else {
+                  var _v6 = row + 1,_v7 = lines,_v8 = board;
+                  row = _v6;
+                  lines = _v7;
+                  board = _v8;
+                  continue clearLines$;
+               }
+      });
+      return A2(clearLines$,0,0);
+   }();
    var $new = $Dict.fromList;
    var testBoard = $new(_U.list([{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 0},_1: $Block.Block($Color.blue)}
                                 ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 1},_1: $Block.Block($Color.yellow)}
                                 ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 1,_1: 0},_1: $Block.Block($Color.red)}
                                 ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 1,_1: 1},_1: $Block.Block($Color.green)}]));
-   var main = A3($Graphics$Collage.collage,600,600,_U.list([toForm(testBoard)]));
+   var fillRow = F3(function (row,block,board) {
+      var blocks = A2($List.repeat,cols,block);
+      var rows = A2($List.repeat,cols,row);
+      var columns = iota(cols);
+      var locations = A3($List.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),rows,columns);
+      var filledRow = $new(A3($List.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),locations,blocks));
+      return A2($Dict.union,filledRow,board);
+   });
+   var test = $Basics.snd(clearLines(A2($Dict.remove,
+   {ctor: "_Tuple2",_0: 1,_1: 0},
+   A3(fillRow,2,$Block.Block($Color.blue),A3(fillRow,1,$Block.Block($Color.yellow),A3(fillRow,0,$Block.Block($Color.red),$new(_U.list([]))))))));
+   var main = A3($Graphics$Collage.collage,600,600,_U.list([toForm(test)]));
    return _elm.Board.values = {_op: _op
                               ,$new: $new
                               ,cols: cols
@@ -53,5 +100,12 @@ Elm.Board.make = function (_elm) {
                               ,testForm$: testForm$
                               ,testForm$$: testForm$$
                               ,testBoard: testBoard
+                              ,cumulativeSum: cumulativeSum
+                              ,iota: iota
+                              ,fillRow: fillRow
+                              ,checkRow: checkRow
+                              ,clearRow: clearRow
+                              ,clearLines: clearLines
+                              ,test: test
                               ,main: main};
 };
