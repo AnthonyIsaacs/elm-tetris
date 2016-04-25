@@ -4,7 +4,7 @@ import Block exposing (Block)
 import Color
 import Dict exposing (Dict)
 import Graphics.Collage exposing (..)
-import Graphics.Element exposing (show)
+import Graphics.Element exposing (flow, down, show)
 import Tetromino exposing (Tetromino, Location)
 
 type alias Board = Dict Location Block
@@ -89,13 +89,30 @@ clearLines =
         else clearLines' (row + 1) lines board
   in clearLines' 0 0
 
-test = new [] |>
-       fillRow 0 (Block Color.red) |>
-       fillRow 1 (Block Color.yellow) |>
-       fillRow 2 (Block Color.blue) |>
-       Dict.remove (1, 0) |>
-       clearLines |> snd
+addTetromino : Tetromino -> Board -> Board
+addTetromino { shape, block } board =
+  let asBoard = List.map2 (,) shape (List.repeat 4 block) |> new
+  in Dict.union asBoard board
 
--- main = show <| iota 10
+inBounds : Tetromino -> Bool
+inBounds { shape } =
+  let checkLocation (r, c) = r >= 0 && c >= 0 && c < cols
+  in List.all checkLocation shape
 
-main = collage 600 600 [toForm test]
+isIntersecting : Tetromino -> Board -> Bool
+isIntersecting { shape } board =
+  let checkLocation location = Dict.member location board
+  in List.any checkLocation shape
+
+isValid : Tetromino -> Board -> Bool
+isValid tetromino board =
+  (inBounds tetromino) && not (isIntersecting tetromino board)
+
+tetromino = Tetromino.shift (5, 5) Tetromino.j
+
+test = new []
+
+main =
+  flow down [ collage 600 600 [toForm (addTetromino tetromino test)]
+            , show <| isValid tetromino test
+            ]

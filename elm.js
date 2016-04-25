@@ -6622,19 +6622,26 @@ Elm.Board.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Dict = Elm.Dict.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $Tetromino = Elm.Tetromino.make(_elm);
    var _op = {};
+   var tetromino = A2($Tetromino.shift,{ctor: "_Tuple2",_0: 5,_1: 5},$Tetromino.t);
+   var isIntersecting = F2(function (_p0,board) {
+      var _p1 = _p0;
+      var checkLocation = function (location) {    return A2($Dict.member,location,board);};
+      return A2($List.any,checkLocation,_p1.shape);
+   });
    var clearRow = F2(function (row,board) {
-      var shift = F3(function (_p0,block,newBoard) {
-         var _p1 = _p0;
-         var _p3 = _p1._0;
-         var _p2 = _p1._1;
-         return _U.cmp(_p3,row) < 0 ? A3($Dict.insert,{ctor: "_Tuple2",_0: _p3,_1: _p2},block,newBoard) : _U.cmp(_p3,row) > 0 ? A3($Dict.insert,
-         {ctor: "_Tuple2",_0: _p3 - 1,_1: _p2},
+      var shift = F3(function (_p2,block,newBoard) {
+         var _p3 = _p2;
+         var _p5 = _p3._0;
+         var _p4 = _p3._1;
+         return _U.cmp(_p5,row) < 0 ? A3($Dict.insert,{ctor: "_Tuple2",_0: _p5,_1: _p4},block,newBoard) : _U.cmp(_p5,row) > 0 ? A3($Dict.insert,
+         {ctor: "_Tuple2",_0: _p5 - 1,_1: _p4},
          block,
          newBoard) : newBoard;
       });
@@ -6649,10 +6656,10 @@ Elm.Board.make = function (_elm) {
       var border = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.black),shape);
       return $Graphics$Collage.group(_U.list([border,A2($Graphics$Collage.filled,$Color.black,shape)]));
    }();
-   var addBlock = F3(function (_p4,block,form) {
-      var _p5 = _p4;
-      var y = $Basics.toFloat(_p5._0) * $Block.size;
-      var x = $Basics.toFloat(_p5._1) * $Block.size;
+   var addBlock = F3(function (_p6,block,form) {
+      var _p7 = _p6;
+      var y = $Basics.toFloat(_p7._0) * $Block.size;
+      var x = $Basics.toFloat(_p7._1) * $Block.size;
       var offSetY = (0 - $Basics.toFloat(rows - 1)) / 2 * $Block.size;
       var offSetX = (0 - $Basics.toFloat(cols - 1)) / 2 * $Block.size;
       var blockForm = A2($Graphics$Collage.move,{ctor: "_Tuple2",_0: offSetX + x,_1: offSetY + y},$Block.toForm(block));
@@ -6663,27 +6670,37 @@ Elm.Board.make = function (_elm) {
    var testForm$ = A3(addBlock,{ctor: "_Tuple2",_0: 1,_1: 0},$Block.Block($Color.red),testForm);
    var testForm$$ = A3(addBlock,{ctor: "_Tuple2",_0: 0,_1: 1},$Block.Block($Color.yellow),testForm$);
    var checkRow = F2(function (row,board) {
-      var blocks = A2($Dict.filter,F2(function (_p7,_p6) {    var _p8 = _p7;return _U.eq(_p8._0,row);}),board);
+      var blocks = A2($Dict.filter,F2(function (_p9,_p8) {    var _p10 = _p9;return _U.eq(_p10._0,row);}),board);
       return _U.eq($Dict.size(blocks),cols);
    });
    var clearLines = function () {
       var clearLines$ = F3(function (row,lines,board) {
          clearLines$: while (true) if (_U.cmp(row,rows) > -1) return {ctor: "_Tuple2",_0: lines,_1: board}; else if (A2(checkRow,row,board)) {
-                  var _v3 = row,_v4 = lines + 1,_v5 = A2(clearRow,row,board);
-                  row = _v3;
-                  lines = _v4;
-                  board = _v5;
+                  var _v4 = row,_v5 = lines + 1,_v6 = A2(clearRow,row,board);
+                  row = _v4;
+                  lines = _v5;
+                  board = _v6;
                   continue clearLines$;
                } else {
-                  var _v6 = row + 1,_v7 = lines,_v8 = board;
-                  row = _v6;
-                  lines = _v7;
-                  board = _v8;
+                  var _v7 = row + 1,_v8 = lines,_v9 = board;
+                  row = _v7;
+                  lines = _v8;
+                  board = _v9;
                   continue clearLines$;
                }
       });
       return A2(clearLines$,0,0);
    }();
+   var inBounds = function (_p11) {
+      var _p12 = _p11;
+      var checkLocation = function (_p13) {
+         var _p14 = _p13;
+         var _p15 = _p14._1;
+         return _U.cmp(_p14._0,0) > -1 && (_U.cmp(_p15,0) > -1 && _U.cmp(_p15,cols) < 0);
+      };
+      return A2($List.all,checkLocation,_p12.shape);
+   };
+   var isValid = F2(function (tetromino,board) {    return inBounds(tetromino) && $Basics.not(A2(isIntersecting,tetromino,board));});
    var $new = $Dict.fromList;
    var testBoard = $new(_U.list([{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 0},_1: $Block.Block($Color.blue)}
                                 ,{ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 1},_1: $Block.Block($Color.yellow)}
@@ -6697,10 +6714,15 @@ Elm.Board.make = function (_elm) {
       var filledRow = $new(A3($List.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),locations,blocks));
       return A2($Dict.union,filledRow,board);
    });
-   var test = $Basics.snd(clearLines(A2($Dict.remove,
-   {ctor: "_Tuple2",_0: 1,_1: 0},
-   A3(fillRow,2,$Block.Block($Color.blue),A3(fillRow,1,$Block.Block($Color.yellow),A3(fillRow,0,$Block.Block($Color.red),$new(_U.list([]))))))));
-   var main = A3($Graphics$Collage.collage,600,600,_U.list([toForm(test)]));
+   var addTetromino = F2(function (_p16,board) {
+      var _p17 = _p16;
+      var asBoard = $new(A3($List.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),_p17.shape,A2($List.repeat,4,_p17.block)));
+      return A2($Dict.union,asBoard,board);
+   });
+   var test = $new(_U.list([]));
+   var main = A2($Graphics$Element.flow,
+   $Graphics$Element.down,
+   _U.list([A3($Graphics$Collage.collage,600,600,_U.list([toForm(A2(addTetromino,tetromino,test))])),$Graphics$Element.show(A2(isValid,tetromino,test))]));
    return _elm.Board.values = {_op: _op
                               ,$new: $new
                               ,cols: cols
@@ -6718,6 +6740,11 @@ Elm.Board.make = function (_elm) {
                               ,checkRow: checkRow
                               ,clearRow: clearRow
                               ,clearLines: clearLines
+                              ,addTetromino: addTetromino
+                              ,inBounds: inBounds
+                              ,isIntersecting: isIntersecting
+                              ,isValid: isValid
+                              ,tetromino: tetromino
                               ,test: test
                               ,main: main};
 };
