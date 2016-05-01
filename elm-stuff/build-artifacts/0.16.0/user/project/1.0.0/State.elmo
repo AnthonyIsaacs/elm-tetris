@@ -5,6 +5,7 @@ Elm.State.make = function (_elm) {
    if (_elm.State.values) return _elm.State.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Board = Elm.Board.make(_elm),
    $Controller = Elm.Controller.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
@@ -16,26 +17,76 @@ Elm.State.make = function (_elm) {
    $Tetromino = Elm.Tetromino.make(_elm),
    $Time = Elm.Time.make(_elm);
    var _op = {};
+   var tryKicks = F3(function (shifts,current,nextState) {
+      tryKicks: while (true) {
+         var _p0 = shifts;
+         if (_p0.ctor === "[]") {
+               return current;
+            } else {
+               var shifted = A2($Tetromino.shift,_p0._0,nextState.falling);
+               if (A2($Board.isValid,shifted,nextState.board)) return _U.update(nextState,{falling: shifted}); else {
+                     var _v1 = _p0._1,_v2 = current,_v3 = nextState;
+                     shifts = _v1;
+                     current = _v2;
+                     nextState = _v3;
+                     continue tryKicks;
+                  }
+            }
+      }
+   });
+   var wallKick = F2(function (current,nextState) {
+      var range = nextState.falling.cols / 2 | 0;
+      var shifts = A2($List.concatMap,function (n) {    return _U.list([{ctor: "_Tuple2",_0: 0,_1: n},{ctor: "_Tuple2",_0: 0,_1: 0 - n}]);},_U.range(1,range));
+      return A3(tryKicks,shifts,current,nextState);
+   });
+   var floorKick = F2(function (current,nextState) {
+      var range = nextState.falling.rows / 2 | 0;
+      var shifts = A2($List.map,function (n) {    return {ctor: "_Tuple2",_0: n,_1: 0};},_U.range(1,range));
+      return A3(tryKicks,shifts,current,nextState);
+   });
+   var useIfValid = F2(function (current,$new) {    return A2($Board.isValid,$new.falling,$new.board) ? $new : current;});
    var checkTick = function (state) {
       return _U.cmp(state.time,state.nextShift) < 0 ? state : _U.update(state,
       {falling: A2($Tetromino.shift,{ctor: "_Tuple2",_0: -1,_1: 0},state.falling),nextShift: state.time + state.shiftDelay});
    };
    var update = F2(function (input,state) {
-      var _p0 = input;
-      switch (_p0.ctor)
-      {case "Rotate": return _U.update(state,{falling: $Tetromino.rotate(state.falling)});
-         case "Shift": return _U.update(state,{falling: A2($Tetromino.shift,_p0._0,state.falling)});
-         default: return checkTick(_U.update(state,{time: state.time + _p0._0}));}
+      var useIfValid$ = useIfValid(state);
+      var _p1 = input;
+      switch (_p1.ctor)
+      {case "Rotate": var rotated = _U.update(state,{falling: $Tetromino.rotate(state.falling)});
+           var nextState = useIfValid$(rotated);
+           var nextState$ = _U.eq(nextState,state) ? A2(wallKick,state,rotated) : nextState;
+           var nextState$$ = _U.eq(nextState$,state) ? A2(floorKick,state,rotated) : nextState$;
+           return nextState$$;
+         case "Shift": return useIfValid$(_U.update(state,{falling: A2($Tetromino.shift,_p1._0,state.falling)}));
+         default: return useIfValid$(checkTick(_U.update(state,{time: state.time + _p1._0})));}
    });
    var view = function (state) {
-      var fallingForm = $Tetromino.toForm(state.falling);
+      var boardForm = $Board.toForm(A2($Board.addTetromino,state.falling,state.board));
       var screenHeight = 600;
       var screenWidth = 800;
-      return A3($Graphics$Collage.collage,screenWidth,screenHeight,_U.list([fallingForm]));
+      return A3($Graphics$Collage.collage,screenWidth,screenHeight,_U.list([boardForm]));
    };
-   var defaultState = {falling: $Tetromino.j,time: 0,nextShift: $Time.second,shiftDelay: $Time.second};
+   var startingShift = {ctor: "_Tuple2",_0: 20,_1: 5};
+   var defaultState = {falling: A2($Tetromino.shift,startingShift,$Tetromino.j)
+                      ,board: $Board.$new(_U.list([]))
+                      ,time: 0
+                      ,nextShift: $Time.second
+                      ,shiftDelay: $Time.second};
    var states = A3($Signal.foldp,update,defaultState,$Controller.inputs);
    var main = A2($Signal.map,view,states);
-   var State = F4(function (a,b,c,d) {    return {falling: a,time: b,nextShift: c,shiftDelay: d};});
-   return _elm.State.values = {_op: _op,State: State,defaultState: defaultState,view: view,checkTick: checkTick,update: update,states: states,main: main};
+   var State = F5(function (a,b,c,d,e) {    return {falling: a,board: b,time: c,nextShift: d,shiftDelay: e};});
+   return _elm.State.values = {_op: _op
+                              ,State: State
+                              ,startingShift: startingShift
+                              ,defaultState: defaultState
+                              ,view: view
+                              ,checkTick: checkTick
+                              ,useIfValid: useIfValid
+                              ,tryKicks: tryKicks
+                              ,wallKick: wallKick
+                              ,floorKick: floorKick
+                              ,update: update
+                              ,states: states
+                              ,main: main};
 };
