@@ -5,11 +5,14 @@ import Board exposing (Board)
 import Controller exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (Element)
+import Random exposing (Generator, Seed)
 import Signal exposing (Signal)
 import Tetromino exposing (Tetromino)
 import Time exposing (Time)
 
 type alias State = { falling : Tetromino
+                   , seed : Seed
+                   , bag : List Tetromino
                    , board : Board
                    , time : Time
                    , nextShift : Time
@@ -19,8 +22,17 @@ type alias State = { falling : Tetromino
 startingShift : (Int, Int)
 startingShift = (20, 5)
 
+initialSeed = 42
+
 defaultState : State
-defaultState = { falling = Tetromino.shift startingShift Tetromino.j
+defaultState =
+  let (bag, seed) = Random.generate Tetromino.bag (Random.initialSeed initialSeed)
+      falling = List.head bag |>
+                Maybe.withDefault Tetromino.i
+      bag' = List.drop 1 bag
+  in { falling = Tetromino.shift startingShift falling
+               , seed = seed
+               , bag = bag'
                , board = Board.new []
                , time = 0
                , nextShift = Time.second
@@ -34,12 +46,39 @@ view state =
       boardForm = Board.addTetromino state.falling state.board |> Board.toForm
   in collage screenWidth screenHeight [ boardForm ]
 
+checkBag : State -> State
+checkBag state =
+  if not (List.isEmpty state.bag) then state
+  else let (bag, seed) = Random.generate Tetromino.bag state.seed
+       in { state | bag = bag
+                  , seed = seed
+          }
+
+nextTetromino : State -> State
+nextTetromino state =
+  let state' = checkBag state
+      nextFalling = List.head state'.bag |>
+                    Maybe.withDefault Tetromino.i |>
+                    Tetromino.shift startingShift
+      nextBag = List.drop 1 state'.bag
+      (lines, nextBoard) = Board.addTetromino state'.falling state'.board |>
+                           Board.clearLines
+  in { state' | falling = nextFalling
+              , bag = nextBag
+              , board = nextBoard
+     }
+
 checkTick : State -> State
 checkTick state =
   if (state.time < state.nextShift) then state
-  else { state | falling = Tetromino.shift (-1, 0 ) state.falling
-               , nextShift = state.time + state.shiftDelay
-       }
+  else
+    let shifted = Tetromino.shift (-1, 0 ) state.falling
+        nextShift = state.time + state.shiftDelay
+        isValid = Board.isValid shifted state.board
+        state' =
+          if isValid then { state | falling = shifted }
+          else nextTetromino state
+    in { state' | nextShift = nextShift }
 
 useIfValid : State -> State -> State
 useIfValid current new =

@@ -6,6 +6,7 @@ import Color exposing (Color)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import List
+import Random exposing (Generator)
 
 type alias Location = (Int, Int)
 type alias Tetromino = { shape : List Location
@@ -132,5 +133,24 @@ shift (rows, cols) tetromino =
 
 tetromino = shift (5, 3) o
 
+zeroToOne : Generator Float
+zeroToOne = Random.float 0 1
+
+shuffleBag : List Float -> List Tetromino
+shuffleBag weights =
+  let tetrominoes = [i, o, j, l, z, s, t]
+      weighted = List.map2 (,) weights tetrominoes
+      sorted = List.sortBy fst weighted
+  in List.map snd sorted
+
+bag : Generator (List Tetromino)
+bag =
+  let weights = Random.list 7 zeroToOne
+  in Random.map shuffleBag weights
+
 main : Element
-main = collage 400 400 [toForm tetromino, drawPivot tetromino]
+main = Random.generate bag (Random.initialSeed 43) |>
+       fst |>
+       List.map toForm |>
+       List.map (\f -> collage 80 80 [f]) |>
+       flow right

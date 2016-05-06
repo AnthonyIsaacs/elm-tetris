@@ -12,9 +12,11 @@ Elm.Tetromino.make = function (_elm) {
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $Random = Elm.Random.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
+   var zeroToOne = A2($Random.$float,0,1);
    var shift = F2(function (_p0,tetromino) {
       var _p1 = _p0;
       var _p5 = _p1._0;
@@ -83,6 +85,13 @@ Elm.Tetromino.make = function (_elm) {
            ,pivot: {r: -0.5,c: 0.5}
            ,rows: 4
            ,cols: 1};
+   var shuffleBag = function (weights) {
+      var tetrominoes = _U.list([i,o,j,l,z,s,t]);
+      var weighted = A3($List.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),weights,tetrominoes);
+      var sorted = A2($List.sortBy,$Basics.fst,weighted);
+      return A2($List.map,$Basics.snd,sorted);
+   };
+   var bag = function () {    var weights = A2($Random.list,7,zeroToOne);return A2($Random.map,shuffleBag,weights);}();
    var toForm = function (_p12) {
       var _p13 = _p12;
       var form = $Block.toForm(_p13.block);
@@ -93,7 +102,13 @@ Elm.Tetromino.make = function (_elm) {
       var forms = A2($List.map,translate,_p13.shape);
       return $Graphics$Collage.group(forms);
    };
-   var main = A3($Graphics$Collage.collage,400,400,_U.list([toForm(tetromino),drawPivot(tetromino)]));
+   var main = A2($Graphics$Element.flow,
+   $Graphics$Element.right,
+   A2($List.map,
+   function (f) {
+      return A3($Graphics$Collage.collage,80,80,_U.list([f]));
+   },
+   A2($List.map,toForm,$Basics.fst(A2($Random.generate,bag,$Random.initialSeed(43))))));
    var Tetromino = F5(function (a,b,c,d,e) {    return {shape: a,block: b,pivot: c,rows: d,cols: e};});
    return _elm.Tetromino.values = {_op: _op
                                   ,Tetromino: Tetromino
@@ -110,5 +125,8 @@ Elm.Tetromino.make = function (_elm) {
                                   ,rotate: rotate
                                   ,shift: shift
                                   ,tetromino: tetromino
+                                  ,zeroToOne: zeroToOne
+                                  ,shuffleBag: shuffleBag
+                                  ,bag: bag
                                   ,main: main};
 };
